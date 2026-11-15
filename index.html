@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="es-UY">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F5F3EE">
+<title>Camina Seguro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Azul petróleo y celeste sobre crema, el naranja se usa solo para problemas.
+     Los botones de acción van siempre abajo, debajo de la información o de lo que se pide, y los pasos son guiados:
+     la app detecta sola cada esquina, así que no hay botones de "llegué". */
+  --teal:#1F4E5F; --sky:#7FB8C9; --cream:#F5F3EE; --ink:#333333; --white:#FFFFFF;
+  --skyl:#DCEBF0; --alert:#A64B0B; --alertbg:#F6E4D6; --grey:#5A6670; --greybg:#E7E5DF;
+  --press:#173B49; --dis:#E3E1DA; --disink:#5E6367; --line:#D8D5CC; --mapline:#7B97A2;
+  --font:"Nunito Sans",system-ui,-apple-system,"Segoe UI",Roboto,Verdana,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--greybg);color:var(--ink);font-family:var(--font);font-size:1.0625rem;line-height:1.4;touch-action:manipulation}
+button,input{font-family:inherit}
+button{cursor:pointer}
+p{margin:0}
+.app{position:relative;max-width:30rem;min-height:100vh;min-height:100dvh;margin:0 auto;background:var(--cream);display:flex;flex-direction:column;overflow-x:clip}
+.app.on-teal{background:var(--teal)}
+@media (min-width:520px){.app{box-shadow:0 0 0 1px var(--line),0 12px 40px rgba(31,78,95,.16)}}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;box-shadow:0 0 0 7px var(--sky)}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+svg{display:block;flex:none}
+
+#nav-warn:empty,.chips:empty{display:none}
+/* Fondo de baldosas */
+.tiles{position:absolute;left:50%;margin-left:-1250px;bottom:var(--dock-h,0px);width:2500px;max-width:none;pointer-events:none;z-index:0}
+
+/* Barra superior */
+.bar{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:1rem 1.25rem .5rem;min-height:4.5rem}
+.brand{display:flex;align-items:center;gap:.55rem;min-width:0}
+.brand-name{font-size:1.25rem;font-weight:800;color:var(--teal);letter-spacing:-.01em;white-space:nowrap}
+.step-count{font-size:1.1875rem;font-weight:800;color:var(--grey)}
+.pill{display:inline-flex;align-items:center;gap:.5rem;min-height:3.125rem;padding:0 1.1rem 0 .85rem;border-radius:1.6rem;background:var(--white);color:var(--teal);border:2px solid var(--teal);font-size:1.0625rem;font-weight:700;line-height:1.1}
+.pill:active{background:var(--skyl)}
+
+/* Contenido */
+.page{position:relative;flex:1;display:flex;flex-direction:column;gap:1rem;padding:.5rem 1.25rem 2.5rem;min-width:0}
+.page>*{min-width:0}
+h1{margin:0;font-size:clamp(1.9rem,9vw,2.375rem);line-height:1.12;font-weight:800;letter-spacing:-.015em;color:var(--teal);text-wrap:balance}
+h1:focus,h1:focus-visible{outline:none;box-shadow:none}
+.lead{font-size:1.3125rem;line-height:1.35;font-weight:600}
+.muted{color:var(--grey)}
+.kicker{font-size:1.0625rem;font-weight:800;color:var(--grey)}
+.foot{font-size:.9375rem;color:var(--grey)}
+.disclaimer{display:flex;gap:.6rem;align-items:flex-start;font-size:.9375rem;color:var(--grey)}
+.disclaimer svg{margin-top:.1rem}
+
+/* Barra de acciones: siempre abajo, debajo de la información */
+.dock{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:.75rem;padding:.85rem 1.25rem calc(1rem + env(safe-area-inset-bottom,0px));background:var(--cream);border-top:1.5px solid var(--line)}
+.dock .field-error{margin:0}
+
+/* Botones */
+.btn{display:flex;align-items:center;justify-content:center;gap:.75rem;width:100%;min-height:4.25rem;padding:.7rem 1.25rem;border-radius:1.375rem;border:2.5px solid transparent;font-size:1.3125rem;font-weight:700;line-height:1.15;text-align:center}
+.btn-primary{background:var(--teal);color:var(--white)}
+.btn-primary:active{background:var(--press)}
+.btn-secondary{background:var(--white);color:var(--teal);border-color:var(--teal);min-height:4rem;font-size:1.25rem}
+.btn-secondary:active{background:var(--skyl)}
+.btn[aria-disabled=true]{background:var(--dis);color:var(--disink);border-color:var(--dis);cursor:default}
+.actions{display:flex;flex-direction:column;gap:.85rem}
+
+/* Campos */
+.combo{position:relative}
+.search{display:flex;align-items:center;gap:.85rem;min-height:4.625rem;padding:0 1.25rem;border-radius:1.375rem;background:var(--white);border:2.5px solid var(--teal)}
+.search:focus-within{outline:3px solid var(--ink);outline-offset:3px;box-shadow:0 0 0 7px var(--sky)}
+.search input{flex:1;min-width:0;border:0;background:none;padding:.9rem 0;font-size:1.3125rem;color:var(--ink)}
+.search input:focus,.search input:focus-visible{outline:none;box-shadow:none}
+.search input::placeholder{color:var(--grey);opacity:1}
+.search.sm{min-height:3.75rem}
+.search.sm input{font-size:1.1875rem}
+.search[data-invalid=true]{border-color:var(--alert);background:#FFFBF8}
+.field-error{display:flex;gap:.45rem;align-items:flex-start;color:var(--alert);font-weight:800;font-size:1rem}
+.field-error svg{margin-top:.1rem}
+.options{position:absolute;z-index:6;left:0;right:0;top:calc(100% + .4rem);margin:0;padding:.3rem;list-style:none;background:var(--white);border:2px solid var(--teal);border-radius:1.25rem;box-shadow:0 12px 28px rgba(31,78,95,.2);max-height:20rem;overflow:auto}
+.options li{min-height:3.25rem;display:flex;align-items:center;gap:.6rem;padding:.55rem .85rem;border-radius:.9rem;font-size:1.1875rem;font-weight:600;cursor:pointer}
+.options li[aria-selected=true]{background:var(--skyl);font-weight:800;box-shadow:inset .3rem 0 0 var(--teal)}
+
+/* Tarjetas */
+.card{display:flex;align-items:center;gap:.9rem;padding:.9rem 1rem;border-radius:1.375rem;background:var(--white);border:1.5px solid var(--line)}
+.card.col{flex-direction:column;align-items:stretch;gap:.7rem}
+.card .grow{flex:1;min-width:0}
+.card small{display:block;font-size:.9375rem;font-weight:600;color:var(--grey)}
+.card .t{font-size:1.25rem;font-weight:800;color:var(--ink);line-height:1.2}
+.ico-circ{flex:none;width:3rem;height:3rem;border-radius:50%;background:var(--skyl);color:var(--teal);display:grid;place-items:center}
+.card .small-btn{min-height:2.75rem;padding:0 1rem;border-radius:1.4rem;background:var(--white);border:2px solid var(--teal);color:var(--teal);font-size:1.0625rem;font-weight:700}
+.card .small-btn:active{background:var(--skyl)}
+.switch{display:flex;align-items:center;gap:.65rem;background:none;border:0;padding:.25rem;color:var(--grey);font-size:1.0625rem;font-weight:700;border-radius:2rem}
+.switch .track{position:relative;width:3.875rem;height:2.25rem;border-radius:1.125rem;background:var(--greybg);border:2px solid var(--grey)}
+.switch .knob{position:absolute;left:.1875rem;top:.1875rem;width:1.625rem;height:1.625rem;border-radius:50%;background:var(--grey);transition:left .15s}
+.switch[aria-checked=true]{color:var(--teal)}
+.switch[aria-checked=true] .track{background:var(--teal);border-color:var(--teal)}
+.switch[aria-checked=true] .knob{left:1.8125rem;background:var(--white)}
+
+/* Chips y avisos */
+.chips{display:flex;flex-wrap:wrap;gap:.6rem}
+.chip{display:inline-flex;align-items:center;gap:.5rem;min-height:2.625rem;padding:.3rem 1rem .3rem .75rem;border-radius:1.4rem;border:2px solid;font-size:1.0625rem;font-weight:700;line-height:1.2}
+.chip-ok{background:var(--skyl);border-color:var(--teal);color:var(--teal)}
+.chip-bad{background:var(--alertbg);border-color:var(--alert);color:var(--alert)}
+.chip-unk{background:var(--greybg);border-color:var(--grey);color:var(--grey)}
+.chip-live{background:var(--white);border-color:var(--teal);color:var(--teal);gap:.65rem}
+.chip-arrive{background:var(--teal);border-color:var(--teal);color:var(--white);animation:pop .25s ease-out}
+.dot{position:relative;display:block;width:.75rem;height:.75rem;border-radius:50%;background:var(--teal);box-shadow:0 0 0 5px var(--skyl)}
+.paused .dot{background:var(--grey);box-shadow:0 0 0 5px var(--greybg)}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.warn{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;border-radius:1.25rem;background:var(--alertbg);border:2px solid var(--alert);color:var(--alert)}
+.warn b{display:block;font-size:1.1875rem;font-weight:800;line-height:1.2}
+.warn span{display:block;font-size:1rem;font-weight:600}
+.note{display:flex;gap:.65rem;align-items:flex-start;padding:.75rem .9rem;border-radius:1.1rem;border:1.5px solid;font-size:1rem;font-weight:600}
+.note svg{margin-top:.05rem}
+.note-bad{background:var(--alertbg);border-color:var(--alert);color:var(--alert)}
+.note-unk,.note-info{background:var(--greybg);border-color:var(--grey);color:#3F4A53}
+.note-ok{background:var(--skyl);border-color:var(--teal);color:var(--teal)}
+.notes{display:flex;flex-direction:column;gap:.6rem}
+
+/* Pestañas */
+.tabs{display:flex;gap:.75rem}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;min-height:3.375rem;border-radius:1.125rem;background:var(--white);color:var(--grey);border:2.5px solid var(--line);font-size:1.125rem;font-weight:700}
+.tab[aria-selected=true]{background:var(--skyl);color:var(--teal);border-color:var(--teal)}
+
+/* Resultado */
+.stats{display:flex;align-items:baseline;flex-wrap:wrap;gap:.25rem 1.1rem}
+.stats .n{font-size:2.375rem;font-weight:800;color:var(--teal);line-height:1;margin-right:.3rem}
+.stats .u{font-size:1.125rem;font-weight:600;color:var(--grey)}
+.to{display:flex;align-items:center;gap:.5rem;font-size:1.1875rem;font-weight:800;color:var(--ink)}
+.wc-tag{display:flex;align-items:center;gap:.5rem;font-weight:800;color:var(--teal)}
+.mapbox{background:var(--white);border:1.5px solid var(--line);border-radius:1.625rem;overflow:hidden;padding:.25rem .15rem 0}
+.map{display:block;width:100%;height:auto}
+.map .lbl{font-size:11px;font-weight:700;fill:var(--grey);paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round;font-family:var(--font)}
+.map .pl{font-size:13px;font-weight:800;font-family:var(--font)}
+.map .bdg{font-size:14px;font-weight:800;text-anchor:middle;font-family:var(--font)}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem .9rem;list-style:none;margin:.2rem .6rem .7rem;padding:.65rem 0 0;border-top:1px solid var(--line);font-size:.9375rem;font-weight:600}
+.legend li{display:flex;align-items:center;gap:.5rem}
+.legend svg{width:2.25rem;height:1.25rem}
+.stepcard{display:flex;align-items:center;gap:.9rem;padding:.9rem 1rem;border-radius:1.375rem;background:var(--white);border:1.5px solid var(--line)}
+.stepcard .num{flex:none;width:3.25rem;height:3.25rem;border-radius:50%;background:var(--teal);color:var(--white);display:grid;place-items:center}
+.stepcard .l1{font-size:1.3125rem;font-weight:800;color:var(--ink);line-height:1.2}
+.stepcard .l2{font-size:1.0625rem;font-weight:600;color:var(--grey)}
+.stepcard .chips{margin-top:.5rem;gap:.4rem}
+.stepcard .chip{min-height:2.125rem;font-size:.9375rem;padding:.2rem .75rem .2rem .55rem;gap:.4rem}
+.stepcard.end{background:var(--skyl);border:2px solid var(--teal)}
+.stepcard.end .num{background:var(--ink)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.75rem}
+
+/* Guía */
+.banner{display:flex;align-items:center;gap:1rem;padding:1.25rem;border-radius:1.875rem;background:var(--teal)}
+.banner-ico{flex:none;width:5rem;height:5rem;border-radius:1.375rem;background:var(--white);color:var(--teal);display:grid;place-items:center}
+.banner-main{font-size:clamp(1.55rem,7.4vw,1.875rem);line-height:1.08;font-weight:800;color:var(--white);letter-spacing:-.01em;overflow-wrap:anywhere}
+.banner-sub{margin-top:.35rem;font-size:1.3125rem;line-height:1.2;font-weight:700;color:var(--skyl)}
+.progress-row{display:flex;justify-content:space-between;font-size:1.125rem;font-weight:700;color:var(--ink);margin-bottom:.5rem}
+.progress-bar{height:.625rem;border-radius:.3125rem;background:var(--skyl);overflow:hidden}
+.progress-bar>div{height:100%;border-radius:.3125rem;background:var(--teal)}
+.proto{margin-top:.5rem;background:var(--cream);padding:.9rem 1rem;border:2px dashed var(--mapline);border-radius:1.25rem;display:flex;flex-direction:column;gap:.7rem;font-size:.9375rem;color:var(--grey)}
+.proto b{color:var(--ink)}
+.proto-btns{display:flex;gap:.6rem;flex-wrap:wrap}
+.proto-btns .small-btn,.proto .small-btn{min-height:2.75rem;padding:0 1rem;border-radius:1.4rem;background:var(--white);border:2px solid var(--teal);color:var(--teal);font-size:1rem;font-weight:700}
+.proto .small-btn:active{background:var(--skyl)}
+details.proto summary{cursor:pointer;font-weight:800;color:var(--ink);min-height:2.75rem;display:flex;align-items:center}
+
+/* Pantallas de estado */
+.state{display:flex;flex-direction:column;gap:1.1rem;padding-top:1.25rem}
+.state-ico{width:6rem;height:6rem;border-radius:50%;display:grid;place-items:center}
+.state-ico.ok{background:var(--skyl);color:var(--teal)}
+.state-ico.bad{background:var(--alertbg);color:var(--alert)}
+.state-ico.unk{background:var(--greybg);color:var(--grey)}
+.summary{background:var(--white);border:1.5px solid var(--line);border-radius:1.375rem;padding:1rem 1.1rem;display:flex;align-items:center;gap:.9rem}
+.summary b{display:block;font-size:1.25rem}
+.here{display:inline-flex;align-items:center;gap:.6rem;font-size:1.4375rem;font-weight:800;color:var(--ink)}
+
+/* Buscando / Recalculando */
+.wait{flex:1;display:flex;flex-direction:column;align-items:center;gap:1.4rem;text-align:center;padding:3.5rem 0 2rem}
+.halo{width:11.875rem;height:11.875rem;border-radius:50%;background:var(--skyl);display:grid;place-items:center;box-shadow:0 0 0 18px rgba(127,184,201,.22)}
+.halo.alert{background:var(--alertbg);box-shadow:0 0 0 16px rgba(246,228,214,.6)}
+.chip-dest{display:inline-flex;align-items:center;gap:.6rem;min-height:3rem;padding:0 1.25rem 0 1rem;border-radius:1.5rem;background:var(--white);border:1.5px solid var(--line);font-size:1.1875rem;font-weight:700;color:var(--ink)}
+.indet{width:15rem;height:.5rem;border-radius:.25rem;background:var(--skyl);overflow:hidden}
+.indet>div{width:40%;height:100%;border-radius:.25rem;background:var(--teal);animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
+@media (prefers-reduced-motion:reduce){.indet>div{animation:none;margin-left:30%}.chip-arrive{animation:none}.switch .knob{transition:none}}
+
+/* Inicio de la app y permiso */
+.splash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem 1.5rem 6rem;text-align:center;position:relative;z-index:1;width:100%;border:0;background:none;color:inherit}
+.splash h1{color:var(--cream);font-size:2.625rem}
+.splash p{font-size:1.25rem;font-weight:600;color:var(--skyl)}
+.perm-halo{width:9.375rem;height:9.375rem;border-radius:50%;background:var(--skyl);display:grid;place-items:center;box-shadow:0 0 0 14px rgba(127,184,201,.28),0 0 0 30px rgba(127,184,201,.14);margin:2rem 0 1rem 2rem}
+
+/* Informar */
+.tiles-cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.cat{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.85rem;min-height:11rem;padding:.75rem;border-radius:1.625rem;background:var(--white);border:2px solid var(--line);font-size:1.25rem;font-weight:800;color:var(--ink);line-height:1.15;text-align:center}
+.cat .circ{width:4.75rem;height:4.75rem;border-radius:50%;background:var(--skyl);display:grid;place-items:center;color:var(--teal)}
+.cat .tk{display:none;position:absolute;right:.65rem;top:.65rem;width:1.875rem;height:1.875rem;border-radius:50%;background:var(--teal);place-items:center}
+.cat[aria-checked=true]{background:var(--skyl);border:3px solid var(--teal)}
+.cat[aria-checked=true] .circ{background:var(--white)}
+.cat[aria-checked=true] .tk{display:grid}
+.optrow{display:flex;align-items:center;gap:.9rem;width:100%;min-height:4.875rem;padding:.75rem 1rem;border-radius:1.375rem;background:var(--white);border:1.5px solid var(--line);text-align:left}
+.optrow .rd{flex:none;width:2rem;height:2rem;border-radius:50%;border:2.5px solid var(--grey);display:grid;place-items:center}
+.optrow .rd svg{display:none}
+.optrow .t{display:block;font-size:1.25rem;font-weight:800;color:var(--ink);line-height:1.2}
+.optrow .s{display:block;font-size:1rem;font-weight:600;color:var(--grey)}
+.optrow[aria-checked=true]{background:var(--skyl);border:3px solid var(--teal)}
+.optrow[aria-checked=true] .rd{background:var(--teal);border-color:var(--teal)}
+.optrow[aria-checked=true] .rd svg{display:block}
+.type-pill{display:inline-flex;align-items:center;gap:.5rem;min-height:2.625rem;padding:0 .9rem 0 .65rem;border-radius:1.4rem;background:var(--skyl);border:2px solid var(--teal);color:var(--teal);font-size:1.0625rem;font-weight:800}
+.head-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.group{display:flex;flex-direction:column;gap:.7rem}
+.panel{display:flex;flex-direction:column;gap:1rem}
+@media (max-width:400px){
+  .bar{padding-left:1rem;padding-right:1rem;gap:.5rem}
+  .page,.dock{padding-left:1rem;padding-right:1rem}
+  .brand{gap:.4rem}.brand-name{font-size:1.0625rem}
+  .pill{padding:0 .85rem 0 .65rem;font-size:1rem;gap:.4rem}
+}
+
+/* Mapa de la zona (solo en computadora) */
+.zone{display:none}
+body.on-teal{background:var(--teal)}
+@media (hover:hover){
+  .btn-primary:hover{background:var(--press)}
+  .btn-secondary:hover,.pill:hover,.card .small-btn:hover,.proto .small-btn:hover{background:var(--skyl)}
+  .cat:hover,.optrow:hover,.tab:hover{border-color:var(--teal)}
+  .options li:hover{background:var(--skyl)}
+  .btn[aria-disabled=true]:hover{background:var(--dis)}
+}
+
+/* Computadora: el contenido se acomoda en dos columnas y el mapa se ve grande */
+@media (min-width:960px){
+  body,body.on-teal{background:var(--cream)}
+  body.on-teal{background:var(--teal)}
+  .app{max-width:78rem;box-shadow:none}
+  .bar{padding:1.5rem 2.5rem .75rem}
+  .page{padding:1rem 2.5rem 3rem}
+  .dock{flex-direction:row;flex-wrap:wrap;align-items:center;gap:.9rem;padding:1rem 2.5rem 1.25rem}
+  .dock .field-error{flex-basis:100%}
+  .dock .btn{flex:1 1 14rem;width:auto}
+  .app[data-layout=wide] .dock .btn{flex:0 1 26rem}
+  .app[data-layout=narrow] .bar,.app[data-layout=narrow] .page,.app[data-layout=narrow] .dock{padding-left:max(2.5rem,calc((100% - 34rem) / 2));padding-right:max(2.5rem,calc((100% - 34rem) / 2))}
+  .app[data-layout=narrow] .page{padding-top:1.5rem}
+
+  .p-home,.p-result,.p-nav{display:grid;grid-template-columns:minmax(0,26rem) minmax(0,1fr);column-gap:3.5rem;row-gap:0;align-content:start}
+  .mapbox .map{max-height:calc(100vh - 19rem);min-height:18rem}
+  .app[data-layout=wide] .tiles{display:none}
+  .tiles{-webkit-mask-image:linear-gradient(90deg,transparent calc(50% - 624px),#000 calc(50% - 470px),#000 calc(50% + 470px),transparent calc(50% + 624px));mask-image:linear-gradient(90deg,transparent calc(50% - 624px),#000 calc(50% - 470px),#000 calc(50% + 470px),transparent calc(50% + 624px))}
+  .app[data-layout=narrow] .dock{flex-direction:column;align-items:stretch}
+  .app[data-layout=narrow] .dock .btn{flex:none;width:100%}
+
+  .p-home{grid-template-areas:"title map" "form map" "foot map" "proto map";grid-template-rows:auto auto auto 1fr}
+  .p-home>h1{grid-area:title;margin:0 0 1.25rem!important}
+  .p-home>form{grid-area:form}
+  .p-home>.foot{grid-area:foot;margin-top:1rem}
+  .p-home>.proto{grid-area:proto;align-self:start;margin-top:1rem}
+  .p-home>.zone{display:block;grid-area:map;align-self:start;max-width:46rem}
+
+  .p-result{grid-template-areas:"head map" "wc map" "stats map" "chips map" "avoid map" "notes map" "steps map" "disc map";grid-template-rows:repeat(7,auto) 1fr}
+  .p-result .tabs{display:none}
+  .p-result .panel,.p-result .panel[hidden]{display:contents!important}
+  .p-result .to{grid-area:head;font-size:1.75rem;font-weight:800;color:var(--teal);margin-bottom:1rem}
+  .p-result .wc-tag{grid-area:wc;margin-bottom:1rem}
+  .p-result .stats{grid-area:stats;margin-bottom:1rem}
+  .p-result .r-chips{grid-area:chips;margin-bottom:1rem}
+  .p-result .r-avoid{grid-area:avoid;margin-bottom:1rem}
+  .p-result .notes{grid-area:notes;margin-bottom:1rem}
+  .p-result .steps{grid-area:steps;margin-bottom:1rem}
+  .p-result .disclaimer{grid-area:disc}
+  .p-result .mapbox{grid-area:map;align-self:start;position:sticky;top:1rem;max-width:46rem}
+
+  .p-nav{grid-template-areas:"banner map" "chips map" "warn map" "progress map" "proto map";grid-template-rows:repeat(4,auto) 1fr}
+  #nav-banner{grid-area:banner}#nav-chips{grid-area:chips}#nav-warn{grid-area:warn}#nav-progress{grid-area:progress}
+  #nav-banner,#nav-chips,#nav-warn,#nav-progress{margin-bottom:1rem}
+  .p-nav .proto{grid-area:proto;align-self:start}
+  .p-nav .mapbox{grid-area:map;align-self:start;max-width:46rem}
+  .p-nav .mapbox .map{max-height:calc(100vh - 13rem)}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="sr" id="live" aria-live="polite" aria-atomic="true"></div>
+<script>
+(function(){
+'use strict';
+
+/* ───────────── Utilidades ───────────── */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+const pl = (n, s, p) => n + ' ' + (n === 1 ? s : p);
+const TEAL = '#1F4E5F', SKY = '#7FB8C9', INK = '#333333', ALERT = '#A64B0B', GREY = '#5A6670', MAPLINE = '#7B97A2', SKYL = '#DCEBF0';
+
+const ICONS = {
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  next:'<path d="M9 5l7 7-7 7"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+  alert:'<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5"/><path d="M12 17.3v.2"/>',
+  check:'<circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/>',
+  tick:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  help:'<circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.6a2.8 2.8 0 1 1 4.2 2.4c-.9.5-1.5 1.1-1.5 2.1"/><path d="M12 17.3v.2"/>',
+  info:'<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.3v.2"/>',
+  flag:'<path d="M5.5 21V4"/><path d="M5.5 4.5h12l-2.5 4 2.5 4h-12"/>',
+  pozos:'<ellipse cx="12" cy="12.5" rx="9" ry="5.5"/><ellipse cx="12" cy="12.5" rx="4.2" ry="2.2"/>',
+  baldosas:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18"/><path d="M12 3l-1.8 4.5 3 2.5-2.7 3 1.5 3v5"/>',
+  desniveles:'<path d="M3 19h6v-6h6V7h6"/><path d="M3 21.5h18"/>',
+  acceso:'<circle cx="12" cy="12" r="9.5"/><path d="M7 16.5h10L7 10.5z"/><path d="M5.3 5.3l13.4 13.4"/>',
+  silla:'<circle cx="11" cy="4.5" r="1.8"/><path d="M11 8v6h5l2.5 5"/><path d="M11 11h4.5"/><circle cx="9.5" cy="17" r="4.5"/>',
+  navegar:'<path d="M12 3l7 17-7-4-7 4z"/>',
+  cerrar:'<path d="M6 6l12 12M18 6L6 18"/>',
+  recto:'<path d="M12 20V5"/><path d="M6 11l6-6 6 6"/>',
+  derecha:'<path d="M7 20v-7a4 4 0 0 1 4-4h8"/><path d="M15 4.5L19.5 9 15 13.5"/>',
+  izquierda:'<path d="M17 20v-7a4 4 0 0 0-4-4H5"/><path d="M9 4.5L4.5 9 9 13.5"/>',
+  pin:'<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  mapa:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  lista:'<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>'
+};
+const ic = (name, size, color, sw) =>
+  '<svg viewBox="0 0 24 24" width="' + (size || 24) + '" height="' + (size || 24) + '" fill="none" stroke="' + (color || 'currentColor') + '" stroke-width="' + (sw || 2.3) +
+  '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + ICONS[name] + '</svg>';
+
+const PIN = 'M44 14 H84 Q104 14 104 34 V62 C104 84 82 100 64 118 C46 100 24 84 24 62 V34 Q24 14 44 14 Z';
+const logo = (size, pin, route) => {
+  pin = pin || TEAL; route = route || SKY;
+  return '<svg viewBox="24 12 80 108" width="' + (size * 80 / 108).toFixed(1) + '" height="' + size + '" aria-hidden="true" focusable="false">' +
+    '<path d="' + PIN + '" fill="' + pin + '"/><path d="M52 75 C52 60 78 66 78 52" fill="none" stroke="' + route + '" stroke-width="9" stroke-linecap="round"/>' +
+    '<circle cx="52" cy="85" r="8.5" fill="none" stroke="' + route + '" stroke-width="7.5"/><circle cx="78" cy="41" r="11" fill="' + route + '"/></svg>';
+};
+
+/* Baldosas decorativas del fondo (una con borde naranja punteado = vereda con problemas) */
+function tiles(rows, color){
+  const out = [];
+  for (let r = 0; r < rows; r++) for (let c = -1; c < 38; c++){
+    const x = c * 66 + (r % 2 ? 33 : 0) - 3, y = r * 66 + 10;
+    out.push(r === rows - 1 && c === 19
+      ? '<rect x="' + (x + 1.5) + '" y="' + (y + 1.5) + '" width="53" height="53" rx="14" fill="none" stroke="' + ALERT + '" stroke-width="3" stroke-dasharray="7 5" opacity=".55"/>'
+      : '<rect x="' + x + '" y="' + y + '" width="56" height="56" rx="14" fill="' + color + '"/>');
+  }
+  return '<svg class="tiles" viewBox="0 0 2500 ' + (rows * 66 + 10) + '" width="2500" height="' + (rows * 66 + 10) + '" aria-hidden="true" focusable="false">' + out.join('') + '</svg>';
+}
+
+/* ───────────── Datos ─────────────
+   Zona esquemática del Centro de Montevideo. Las calles son reales, pero el estado de
+   las veredas y la cantidad de reportes son inventados para demostrar el funcionamiento. */
+const PROBLEMS = {
+  pozos:      {label:'Pozos'},
+  baldosas:   {label:'Baldosas en mal estado'},
+  desniveles: {label:'Desniveles'},
+  acceso:     {label:'Falta de acceso'}
+};
+const COLS = [
+  {name:'Río Negro'},
+  {name:'Paraguay'},
+  {name:'Rondeau', south:'Gutiérrez Ruiz'},   // la misma línea cambia de nombre al cruzar 18 de Julio
+  {name:'Zelmar Michelini'},
+  {name:'Carlos Quijano'}
+];
+const ROWS = ['Mercedes','Colonia','18 de Julio','San José','Soriano'];
+const colName = (x, y) => (COLS[x].south && y > 2) ? COLS[x].south : COLS[x].name;
+const edgeColName = (x, y) => (COLS[x].south && y >= 2) ? COLS[x].south : COLS[x].name;
+
+const OK = {s:'ok'}, UNK = {s:'unk'};
+const BAD = (t, r) => ({s:'bad', t, r});
+// H[fila][i]: cuadra entre la columna i y la i+1.  V[columna][j]: cuadra entre la fila j y la j+1.
+const H = [
+  [OK, UNK, OK, OK],
+  [OK, OK, BAD('baldosas',2), OK],
+  [OK, BAD('baldosas',3), OK, BAD('desniveles',2)],
+  [OK, OK, BAD('pozos',4), OK],
+  [BAD('pozos',5), OK, UNK, OK]
+];
+const V = [
+  [OK, OK, OK, OK],
+  [OK, BAD('desniveles',2), OK, OK],
+  [OK, OK, BAD('pozos',3), OK],
+  [OK, OK, OK, UNK],
+  [OK, BAD('acceso',2), OK, OK]
+];
+
+const edges = [];
+function addEdge(o, line, a, b, street, label, d){
+  edges.push({
+    id:o + a[0] + a[1], o, line, a, b, street, label,
+    status:d.s, problems: d.s === 'bad' ? [{t:d.t, r:d.r, n:0}] : []
+  });
+}
+for (let y = 0; y < 5; y++) for (let x = 0; x < 4; x++)
+  addEdge('h', y, [x,y], [x+1,y], ROWS[y], ROWS[y] + ', entre ' + colName(x,y) + ' y ' + colName(x+1,y), H[y][x]);
+for (let x = 0; x < 5; x++) for (let y = 0; y < 4; y++)
+  addEdge('v', x, [x,y], [x,y+1], edgeColName(x,y), edgeColName(x,y) + ', entre ' + ROWS[y] + ' y ' + ROWS[y+1], V[x][y]);
+
+const key = (x, y) => x + ',' + y;
+const adj = {};
+edges.forEach(e => {
+  const a = key(...e.a), b = key(...e.b);
+  (adj[a] = adj[a] || []).push({edge:e, from:e.a, to:e.b});
+  (adj[b] = adj[b] || []).push({edge:e, from:e.b, to:e.a});
+});
+
+const ORIGIN = {x:0, y:3, from:'chosen', example:true};
+const nodeLabel = (x, y) => ROWS[y] + ' y ' + colName(x, y);
+const placeName = (x, y) => (x === 2 && y === 2) ? 'Plaza Cagancha' : nodeLabel(x, y);
+
+const places = [];
+for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++){
+  const plaza = (x === 2 && y === 2);
+  const inter = ROWS[y] + ' y ' + colName(x,y);
+  const alt = colName(x,y) + ' y ' + ROWS[y];
+  const label = plaza ? 'Plaza Cagancha' : inter;
+  places.push({k:key(x,y), x, y, label, keys:[norm(label), norm(alt), norm(inter)], hay:norm(label + ' ' + inter + ' ' + alt)});
+}
+places.sort((a,b) => (b.label === 'Plaza Cagancha') - (a.label === 'Plaza Cagancha'));
+const FEATURED = ['Plaza Cagancha','18 de Julio y Carlos Quijano','Colonia y Zelmar Michelini','Soriano y Zelmar Michelini','Mercedes y Paraguay'];
+
+const blocks = edges.map(e => ({id:e.id, label:e.label, edge:e, keys:[norm(e.label)], hay:norm(e.label)}));
+blocks.sort((a,b) => (b.edge.street === '18 de Julio') - (a.edge.street === '18 de Julio'));
+
+const ORIGIN_PLACE = places.find(p => p.k === key(ORIGIN.x, ORIGIN.y));
+const FEATURED_O = ['San José y Río Negro','Plaza Cagancha','Colonia y Paraguay','18 de Julio y Zelmar Michelini','Mercedes y Río Negro'];
+
+function search(list, q){
+  const tokens = norm(q).split(' ').filter(t => t && t !== 'y' && t !== 'esq' && t !== 'esquina');
+  if (!tokens.length) return [];
+  const nq = norm(q);
+  const found = list.filter(it => tokens.every(t => it.hay.includes(t)));
+  const rank = it => it.keys.includes(nq) ? 0 : (it.keys.some(k => k.startsWith(nq)) ? 1 : 2);
+  return found.map((it,i) => ({it,i,r:rank(it)})).sort((a,b) => a.r - b.r || a.i - b.i).map(o => o.it);
+}
+
+function resolvePlace(q, current){
+  if (current && norm(current.label) === norm(q)) return {place:current};
+  const m = search(places, q);
+  const exact = m.find(p => p.keys.includes(norm(q)));
+  if (exact) return {place:exact};
+  if (m.length === 1) return {place:m[0]};
+  return {none:m.length === 0};
+}
+
+/* ───────────── Cálculo del recorrido ───────────── */
+function findPath(fromK, toK, weight){
+  const dist = {}, prev = {}, done = {};
+  Object.keys(adj).forEach(k => dist[k] = Infinity);
+  dist[fromK] = 0;
+  for (;;){
+    let u = null, best = Infinity;
+    for (const k in dist) if (!done[k] && dist[k] < best){ best = dist[k]; u = k; }
+    if (u === null || u === toK) break;
+    done[u] = true;
+    for (const n of adj[u]){
+      const t = key(...n.to), nd = dist[u] + weight(n.edge);
+      if (nd < dist[t]){ dist[t] = nd; prev[t] = {k:u, seg:n}; }
+    }
+  }
+  if (dist[toK] === Infinity) return null;
+  const path = [];
+  for (let k = toK; k !== fromK; k = prev[k].k) path.unshift(prev[k].seg);
+  return path;
+}
+// Evita las cuadras con problemas en todo lo posible: pesan más que cualquier desvío.
+// Una cuadra sin información pesa como dos y media, y una común como una.
+// Con silla de ruedas, las barreras (pozos, desniveles, falta de acceso) pesan todavía más
+// y una cuadra sin información se evita más, porque no se sabe si se puede pasar.
+const weightFor = wc => e => {
+  if (e.status === 'bad') return (wc && e.problems.some(p => p.t !== 'baldosas')) ? 100000 : 1000;
+  if (e.status === 'unk') return wc ? 5 : 2.5;
+  return 1;
+};
+// Camino más corto (referencia para comparar); ante empate elige el que tenga menos cuadras con problemas.
+const wShortest = e => 1000 + (e.status === 'bad' ? 1 : 0);
+const tally = path => ({
+  blocks:path.length,
+  bad:path.filter(s => s.edge.status === 'bad').length,
+  unk:path.filter(s => s.edge.status === 'unk').length
+});
+
+function computeRoute(place, origin, wc){
+  const from = key(origin.x, origin.y), to = place.k;
+  const path = findPath(from, to, weightFor(wc));
+  if (!path || !path.length) return null;
+  const short = findPath(from, to, wShortest) || path;
+  return {place, origin, wc, path, sum:tally(path), shortSum:tally(short), steps:buildSteps(path)};
+}
+
+function buildSteps(path){
+  const runs = [];
+  path.forEach(seg => {
+    const k = seg.edge.o + seg.edge.line, last = runs[runs.length - 1];
+    if (last && last.k === k) last.segs.push(seg); else runs.push({k, segs:[seg]});
+  });
+  let prevDir = null;
+  return runs.map((r, i) => {
+    const first = r.segs[0], end = r.segs[r.segs.length - 1].to;
+    const dir = [Math.sign(first.to[0] - first.from[0]), Math.sign(first.to[1] - first.from[1])];
+    let turn = null;
+    if (prevDir){
+      const cross = prevDir[0] * dir[1] - prevDir[1] * dir[0];
+      turn = cross > 0 ? 'la derecha' : 'la izquierda';
+    }
+    prevDir = dir;
+    const street = [...new Set(r.segs.map(s => s.edge.street))].join(' / ');
+    const cross = first.edge.o === 'h' ? colName(end[0], end[1]) : ROWS[end[1]];
+    return {i, street, cross, turn, segs:r.segs};
+  });
+}
+
+function stepChips(segs){
+  const ok = segs.filter(s => s.edge.status === 'ok').length;
+  const badSegs = segs.filter(s => s.edge.status === 'bad');
+  const unk = segs.filter(s => s.edge.status === 'unk').length;
+  const kinds = (ok ? 1 : 0) + (badSegs.length ? 1 : 0) + (unk ? 1 : 0);
+  const chips = [];
+  if (ok) chips.push(['ok','check', kinds > 1 ? pl(ok,'cuadra','cuadras') + ' sin problemas registrados' : 'Sin problemas registrados']);
+  if (badSegs.length){
+    const probs = badSegs.flatMap(s => s.edge.problems);
+    const types = [...new Set(probs.map(p => PROBLEMS[p.t].label.toLowerCase()))].join(', ');
+    const old = probs.reduce((a,p) => a + p.r, 0), fresh = probs.reduce((a,p) => a + p.n, 0);
+    const extra = [];
+    if (old) extra.push(pl(old,'reporte','reportes'));
+    if (fresh) extra.push(fresh === 1 ? '1 reporte nuevo, sin verificar' : fresh + ' reportes nuevos, sin verificar');
+    const head = kinds > 1 ? pl(badSegs.length,'cuadra','cuadras') + ' con problemas: ' : 'Con problemas registrados: ';
+    chips.push(['bad','alert', head + types + (extra.length ? ' · ' + extra.join(' · ') : '')]);
+  }
+  if (unk) chips.push(['unk','help', kinds > 1 ? pl(unk,'cuadra','cuadras') + ' sin información' : 'Sin información sobre el estado']);
+  return chips;
+}
+
+/* ───────────── Mapa esquemático ───────────── */
+function splitName(n){
+  if (n.length <= 9 || n.indexOf(' ') < 0) return [n];
+  let best = -1, d = 99;
+  for (let i = 0; i < n.length; i++) if (n[i] === ' ' && Math.abs(i - n.length / 2) < d){ d = Math.abs(i - n.length / 2); best = i; }
+  return [n.slice(0, best), n.slice(best + 1)];
+}
+const W = 360, HH = 330, gx = x => 76 + x * 62, gy = y => 48 + y * 58;
+function pillSvg(text, x, y, bg, fg, border){
+  const w = Math.round(text.length * 7.6 + 22);
+  x = Math.max(4, Math.min(W - w - 4, x));
+  return '<g><rect x="' + x + '" y="' + y + '" width="' + w + '" height="23" rx="11.5" fill="' + bg + '"' + (border ? ' stroke="' + border + '" stroke-width="1.5"' : '') + '/>' +
+    '<text class="pl" x="' + (x + w / 2) + '" y="' + (y + 16.5) + '" text-anchor="middle" fill="' + fg + '">' + esc(text) + '</text></g>';
+}
+
+function overlap(a, b){
+  const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+  return w > 0 && h > 0 ? w * h : 0;
+}
+// Elige el lugar de la etiqueta que menos tape el recorrido, los íconos de problema y los otros marcadores.
+function placePill(text, cx, cy, rad, avoid){
+  const w = Math.round(text.length * 7.6 + 22), h = 23, d = rad + 8, k = d * 0.6;
+  const cands = [[cx + d, cy - h / 2], [cx - d - w, cy - h / 2], [cx - w / 2, cy - d - h], [cx - w / 2, cy + d],
+                 [cx + k, cy - d - h + 4], [cx + k, cy + d - 4], [cx - k - w, cy - d - h + 4], [cx - k - w, cy + d - 4]];
+  let best = null;
+  cands.forEach((c, i) => {
+    const x = Math.max(4, Math.min(W - w - 4, c[0])), y = Math.max(2, Math.min(HH - h - 2, c[1])), rc = {x, y, w, h};
+    let sc = i * 0.5; avoid.forEach(a => { sc += overlap(rc, a); });
+    if (!best || sc < best.sc) best = {sc, x, y, w, h};
+  });
+  avoid.push({x:best.x, y:best.y, w:best.w, h:best.h});
+  return best;
+}
+
+function mapSvg(r, o){
+  // o.cur: índice de la cuadra actual en la guía; o.frac: avance dentro de esa cuadra (0 a 1).
+  o = o || {};
+  const zone = !r;
+  if (zone) r = {path:[], place:{x:-9, y:-9}, origin:{x:-9, y:-9}};
+  const nav = typeof o.cur === 'number', cur = o.cur, frac = o.frac || 0;
+  const idx = {}; r.path.forEach((sg, k) => idx[sg.edge.id] = k);
+  const base = [], route = [], over = [], badges = [], labels = [], nodes = [], arrows = [];
+
+  COLS.forEach((c, x) => {
+    const ls = splitName(c.name);
+    ls.forEach((t, i) => labels.push('<text class="lbl" x="' + gx(x) + '" y="' + (26 - (ls.length - 1 - i) * 12) + '" text-anchor="middle">' + esc(t) + '</text>'));
+    if (c.south){
+      splitName(c.south).forEach((t, i) => labels.push('<text class="lbl" x="' + gx(x) + '" y="' + (gy(4) + 26 + i * 12) + '" text-anchor="middle">' + esc(t) + '</text>'));
+    }
+  });
+  ROWS.forEach((n, y) => labels.push('<text class="lbl" x="56" y="' + (gy(y) + 4) + '" text-anchor="end">' + esc(n) + '</text>'));
+
+  edges.forEach(e => {
+    const x1 = gx(e.a[0]), y1 = gy(e.a[1]), x2 = gx(e.b[0]), y2 = gy(e.b[1]);
+    const ln = extra => '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' + extra + '/>';
+    const k = idx[e.id], on = k !== undefined;
+    if (on){
+      const done = nav && k < cur, now = nav && k === cur;
+      route.push(ln('stroke="' + (done ? '#B9C9CF' : TEAL) + '" stroke-width="' + (now ? 16 : 12) + '" stroke-linecap="round"'));
+    }
+    if (e.status === 'ok' && !on) base.push(ln('stroke="' + MAPLINE + '" stroke-width="4" stroke-linecap="round"'));
+    if (e.status === 'bad') (on ? over : base).push(ln(on ? 'stroke="#FFD9B8" stroke-width="4.5" stroke-dasharray="8 6"' : 'stroke="' + ALERT + '" stroke-width="5" stroke-dasharray="8 6" stroke-linecap="round"'));
+    if (e.status === 'unk') (on ? over : base).push(ln(on ? 'stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0.1 8"' : 'stroke="' + GREY + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 8"'));
+    if (e.status !== 'ok'){
+      const bad = e.status === 'bad', c = bad ? ALERT : GREY, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      badges.push('<g><circle cx="' + mx + '" cy="' + my + '" r="11" fill="#fff" stroke="' + c + '" stroke-width="3"/><text class="bdg" x="' + mx + '" y="' + (my + 5) + '" fill="' + c + '">' + (bad ? '!' : '?') + '</text></g>');
+    }
+  });
+
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++)
+    nodes.push('<circle cx="' + gx(x) + '" cy="' + gy(y) + '" r="5" fill="#fff" stroke="' + MAPLINE + '" stroke-width="2.5"/>');
+
+  let marks = '';
+  const ex = gx(r.place.x), ey = gy(r.place.y);
+  const avoid = [];
+  r.path.forEach(sg => {
+    const x1 = gx(sg.from[0]), y1 = gy(sg.from[1]), x2 = gx(sg.to[0]), y2 = gy(sg.to[1]);
+    avoid.push({x:Math.min(x1, x2) - 10, y:Math.min(y1, y2) - 10, w:Math.abs(x2 - x1) + 20, h:Math.abs(y2 - y1) + 20});
+  });
+  edges.forEach(e => { if (e.status !== 'ok'){ const mx = (gx(e.a[0]) + gx(e.b[0])) / 2, my = (gy(e.a[1]) + gy(e.b[1])) / 2; avoid.push({x:mx - 13, y:my - 13, w:26, h:26}); } });
+  const destDot = zone ? '' : '<circle cx="' + ex + '" cy="' + ey + '" r="14" fill="' + INK + '" stroke="#fff" stroke-width="3"/><rect x="' + (ex - 5) + '" y="' + (ey - 5) + '" width="10" height="10" rx="2" fill="#fff"/>';
+  if (!zone) avoid.push({x:ex - 16, y:ey - 16, w:32, h:32});
+  let you = null, start = null;
+  if (zone){ /* mapa de la zona: sin recorrido ni marcadores */ }
+  else if (nav){
+    const sg = r.path[cur], ax = gx(sg.from[0]), ay = gy(sg.from[1]), bx = gx(sg.to[0]), by = gy(sg.to[1]);
+    const dx = Math.sign(bx - ax), dy = Math.sign(by - ay), px = ax + (bx - ax) * frac, py = ay + (by - ay) * frac;
+    // flecha blanca sobre el recorrido, un poco más adelante de la persona
+    const t = Math.min(frac + 0.24, 0.9), mx = ax + (bx - ax) * t, my = ay + (by - ay) * t, qx = -dy, qy = dx;
+    const pts = [[mx + dx * 7, my + dy * 7], [mx - dx * 5 + qx * 7, my - dy * 5 + qy * 7], [mx - dx * 5 - qx * 7, my - dy * 5 - qy * 7]];
+    arrows.push('<polygon points="' + pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ') + '" fill="#fff"/>');
+    you = {px, py};
+    avoid.push({x:px - 21, y:py - 21, w:42, h:42});
+  } else {
+    start = {sx:gx(r.origin.x), sy:gy(r.origin.y)};
+    avoid.push({x:start.sx - 17, y:start.sy - 17, w:34, h:34});
+  }
+  if (zone){ /* nada */ }
+  else {
+  const dl = placePill('Destino', ex, ey, 14, avoid);
+  marks += destDot + pillSvg('Destino', dl.x, dl.y, INK, '#fff');
+  }
+  if (zone){ /* nada */ }
+  else if (you){
+    const yl = placePill('Estás acá', you.px, you.py, 19, avoid);
+    marks += '<circle cx="' + you.px.toFixed(1) + '" cy="' + you.py.toFixed(1) + '" r="19" fill="#fff" stroke="' + TEAL + '" stroke-width="4"/><circle cx="' + you.px.toFixed(1) + '" cy="' + you.py.toFixed(1) + '" r="8" fill="' + TEAL + '"/>' + pillSvg('Estás acá', yl.x, yl.y, TEAL, '#fff');
+  } else {
+    const sl = placePill('Salida', start.sx, start.sy, 14, avoid);
+    marks += '<circle cx="' + start.sx + '" cy="' + start.sy + '" r="14" fill="#fff" stroke="' + TEAL + '" stroke-width="7"/>' + pillSvg('Salida', sl.x, sl.y, '#fff', TEAL, TEAL);
+  }
+
+  const aria = zone ? 'Mapa esquemático de la zona, con las cuadras con problemas y sin información marcadas.' : nav ? 'Mapa esquemático con tu posición en el recorrido.' : 'Mapa esquemático con el recorrido sugerido. El detalle está en la pestaña Pasos.';
+  return '<svg class="map" viewBox="0 0 ' + W + ' ' + HH + '" role="img" aria-label="' + aria + '">' +
+    labels.join('') + base.join('') + route.join('') + over.join('') + arrows.join('') + nodes.join('') + badges.join('') + marks + '</svg>';
+}
+
+const legItem = (svg, txt) => '<li><svg viewBox="0 0 36 20" aria-hidden="true">' + svg + '</svg>' + txt + '</li>';
+const L_ROUTE = '<line x1="3" y1="10" x2="33" y2="10" stroke="' + TEAL + '" stroke-width="10" stroke-linecap="round"/>';
+const L_DONE = '<line x1="3" y1="10" x2="33" y2="10" stroke="#B9C9CF" stroke-width="10" stroke-linecap="round"/>';
+const L_OK = '<line x1="3" y1="10" x2="33" y2="10" stroke="' + MAPLINE + '" stroke-width="4" stroke-linecap="round"/>';
+const L_BAD = '<line x1="3" y1="10" x2="33" y2="10" stroke="' + ALERT + '" stroke-width="5" stroke-dasharray="8 6"/><circle cx="18" cy="10" r="8" fill="#fff" stroke="' + ALERT + '" stroke-width="2.4"/><text x="18" y="14.5" text-anchor="middle" font-size="12" font-weight="800" fill="' + ALERT + '">!</text>';
+const L_UNK = '<line x1="3" y1="10" x2="33" y2="10" stroke="' + GREY + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 8"/><circle cx="18" cy="10" r="8" fill="#fff" stroke="' + GREY + '" stroke-width="2.4"/><text x="18" y="14.5" text-anchor="middle" font-size="12" font-weight="800" fill="' + GREY + '">?</text>';
+const LEGEND = '<ul class="legend" aria-label="Referencias del mapa">' + legItem(L_ROUTE, 'Tu recorrido') + legItem(L_OK, 'Sin problemas registrados') + legItem(L_BAD, 'Con problemas registrados') + legItem(L_UNK, 'Sin información') + '</ul>';
+const LEGEND_ZONE = '<ul class="legend" aria-label="Referencias del mapa">' + legItem(L_OK, 'Sin problemas registrados') + legItem(L_BAD, 'Con problemas registrados') + legItem(L_UNK, 'Sin información') + '</ul>';
+const LEGEND_NAV = '<ul class="legend" aria-label="Referencias del mapa">' + legItem(L_BAD, 'Con problemas') + legItem(L_UNK, 'Sin información') + '</ul>';
+
+/* ───────────── Combobox accesible ───────────── */
+function combo(o){
+  const input = o.input, list = o.list;
+  let items = [], active = -1, open = false, timer = null;
+  function paint(){
+    list.innerHTML = items.map((it, i) => '<li role="option" id="' + list.id + '-' + i + '" data-i="' + i + '" aria-selected="' + (i === active) + '">' + esc(it.label) + '</li>').join('');
+    const shown = open && items.length > 0;
+    list.hidden = !shown;
+    input.setAttribute('aria-expanded', String(shown));
+    if (shown && active >= 0){
+      input.setAttribute('aria-activedescendant', list.id + '-' + active);
+      const el = list.children[active]; if (el && el.scrollIntoView) el.scrollIntoView({block:'nearest'});
+    } else input.removeAttribute('aria-activedescendant');
+  }
+  function show(){
+    items = o.items(input.value); active = -1; open = true;
+    // Si lo escrito ya es exactamente la única opción, no hay nada más que elegir.
+    if (items.length === 1 && norm(items[0].label) === norm(input.value)) open = false;
+    paint();
+  }
+  function hide(){ open = false; paint(); }
+  function choose(i, byPointer){
+    const it = items[i]; if (!it) return;
+    input.value = it.label; o.onChoose(it); hide();
+    if (byPointer) input.blur();
+  }
+  input.addEventListener('input', () => { if (o.onInput) o.onInput(); show(); });
+  input.addEventListener('focus', () => { clearTimeout(timer); show(); });
+  input.addEventListener('blur', () => { timer = setTimeout(hide, 160); });
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'ArrowDown'){ ev.preventDefault(); if (!open) show(); active = (active + 1) % Math.max(items.length, 1); paint(); }
+    else if (ev.key === 'ArrowUp'){ ev.preventDefault(); if (!open) show(); active = (active - 1 + items.length) % Math.max(items.length, 1); paint(); }
+    else if (ev.key === 'Enter' && open && active >= 0){ ev.preventDefault(); choose(active, false); }
+    else if (ev.key === 'Escape' && open){ ev.preventDefault(); hide(); }
+  });
+  list.addEventListener('click', ev => { const li = ev.target.closest('li'); if (li) choose(Number(li.dataset.i), true); });
+  return {show, hide};
+}
+
+/* ───────────── Estado ───────────── */
+const app = document.getElementById('app'), live = document.getElementById('live');
+const STEP_MS = 5000, TICK = 200, BLOCK_M = 100;
+const homeEdge = edges.find(e => e.id === 'v02');           // Río Negro, entre 18 de Julio y San José: cerca de la ubicación de partida
+const state = {
+  screen:'splash', demo:/^#demo$/.test(location.hash), locOn:false, origMode:'gps', orig:ORIGIN_PLACE, origQuery:'',
+  destQuery:'', dest:null, wc:false, tab:'mapa',
+  lastQuery:'', lastKind:'dest', result:null, origin:ORIGIN, token:0,
+  nav:{i:0, frac:0}, paused:false, timer:null, arrival:null, lastWarn:'',
+  report:{type:null, block:null, q:'', from:'home'}, done:null
+};
+const announce = msg => { live.textContent = ''; setTimeout(() => { live.textContent = msg; }, 60); };
+const setHtml = (el, html) => { if (el && el.__h !== html){ el.innerHTML = html; el.__h = html; } };
+const labelParts = label => { const k = label.indexOf(', '); return k < 0 ? [label, ''] : [label.slice(0, k), label.slice(k + 2)]; };
+const edgeBlock = edge => blocks.find(bl => bl.edge === edge);
+const crossName = (r, i) => {
+  if (i >= r.path.length - 1) return r.place.label;
+  const seg = r.path[i], to = seg.to;
+  return seg.edge.o === 'h' ? colName(to[0], to[1]) : ROWS[to[1]];
+};
+
+/* ───────────── Piezas de pantalla ───────────── */
+const pillBtn = (id, label, icon) => '<button type="button" class="pill" id="' + id + '">' + ic(icon, 24) + '<span>' + label + '</span></button>';
+const brand = () => '<div class="brand">' + logo(40) + '<span class="brand-name">Camina Seguro</span></div>';
+const barHtml = (left, right) => '<header class="bar">' + left + (right || '') + '</header>';
+const primary = (id, label, icon, extra) => '<button type="button" class="btn btn-primary" id="' + id + '"' + (extra || '') + '>' + (icon ? ic(icon, 26) : '') + '<span>' + label + '</span></button>';
+const secondary = (id, label, icon) => '<button type="button" class="btn btn-secondary" id="' + id + '">' + (icon ? ic(icon, 24) : '') + '<span>' + label + '</span></button>';
+const chipsHtml = segs => stepChips(segs).map(c => '<span class="chip chip-' + c[0] + '">' + ic(c[1], 22) + '<span>' + esc(c[2]) + '</span></span>').join('');
+const MARK_TICK = ic('tick', 20, '#fff', 3.4);
+function fieldError(boxId, inputId, errId, msg){
+  const box = document.getElementById(boxId), input = document.getElementById(inputId), err = document.getElementById(errId);
+  if (!err) return;
+  if (msg){ err.innerHTML = ic('alert', 20) + '<span>' + esc(msg) + '</span>'; err.hidden = false; if (box) box.dataset.invalid = 'true'; if (input) input.setAttribute('aria-invalid', 'true'); }
+  else { err.hidden = true; err.innerHTML = ''; if (box) delete box.dataset.invalid; if (input) input.removeAttribute('aria-invalid'); }
+}
+const searchField = (o) =>
+  '<div class="combo">' +
+    '<div class="search' + (o.sm ? ' sm' : '') + '" id="' + o.id + '-box">' + ic(o.icon || 'search', o.sm ? 26 : 28, TEAL) +
+      '<label class="sr" for="' + o.id + '">' + o.label + '</label>' +
+      '<input id="' + o.id + '" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="' + o.id + '-list" aria-describedby="' + o.id + '-error" autocomplete="off" autocapitalize="sentences" enterkeyhint="' + (o.enter || 'search') + '" placeholder="' + esc(o.ph) + '" value="' + esc(o.value || '') + '">' +
+    '</div>' +
+    '<ul id="' + o.id + '-list" class="options" role="listbox" aria-label="' + o.listLabel + '" hidden></ul>' +
+  '</div>';
+
+/* ───────────── Pantallas ───────────── */
+function splashScreen(){
+  return {teal:true, raw:true, tiles:tiles(3, 'rgba(127,184,201,0.2)'), bar:'', body:
+    '<div class="splash" id="splash" role="button" tabindex="0" aria-label="Camina Seguro. Recorridos con mejores veredas. Tocá para empezar.">' +
+      logo(150, '#F5F3EE', TEAL) + '<h1 id="h1" aria-hidden="true">Camina Seguro</h1><p aria-hidden="true">Recorridos con mejores veredas</p></div>'};
+}
+
+function permScreen(){
+  return {tiles:tiles(2, SKYL), bar:barHtml(brand()), body:
+    '<div class="perm-halo">' + ic('pin', 76, TEAL, 2.2) + '</div>' +
+    '<h1 id="h1" tabindex="-1">Permití tu ubicación</h1>' +
+    '<p class="lead">Así te avisamos cuando llegás a cada esquina, sin que tengas que tocar nada.</p>',
+    dock:primary('btn-allow', 'Permitir ubicación', 'pin') + secondary('btn-deny', 'Ahora no')};
+}
+
+function origCard(){
+  if (state.origMode === 'gps')
+    return '<div class="card"><span class="ico-circ">' + ic('pin', 26) + '</span><div class="grow"><small>Salís desde</small><span class="t">Tu ubicación</span><small>' + esc(ORIGIN_PLACE.label) + '</small></div>' +
+      '<button type="button" class="small-btn" id="btn-orig-change">Cambiar</button></div>';
+  return '<div class="card col"><label class="kicker" for="orig">Salís desde</label>' +
+    '<p id="orig-error" class="field-error" role="alert" hidden></p>' +
+    searchField({id:'orig', icon:'pin', sm:true, label:'Punto de partida', ph:'Ej.: San José y Río Negro', value:state.origQuery, listLabel:'Puntos de partida sugeridos'}) +
+    (state.locOn
+      ? '<button type="button" class="small-btn" id="btn-orig-gps" style="align-self:flex-start;display:inline-flex;gap:.5rem;align-items:center">' + ic('pin', 20) + 'Usar mi ubicación</button>'
+      : '<button type="button" class="small-btn" id="btn-orig-gps" style="align-self:flex-start;display:inline-flex;gap:.5rem;align-items:center">' + ic('pin', 20) + 'Activar mi ubicación</button>') +
+    '</div>';
+}
+
+function homeScreen(){
+  return {page:'p-home', wide:true, tiles:tiles(2, SKYL), bar:barHtml(brand(), pillBtn('btn-report', 'Informar', 'alert')), body:
+    '<h1 id="h1" tabindex="-1" style="margin-top:.75rem">¿A dónde vas?</h1>' +
+    '<form id="form-search" class="stack" style="display:flex;flex-direction:column;gap:1rem" novalidate>' +
+      '<p id="dest-error" class="field-error" role="alert" hidden></p>' +
+      searchField({id:'dest', label:'Destino', ph:'Buscar destino', value:state.destQuery, listLabel:'Destinos sugeridos'}) +
+      origCard() +
+      '<div class="card"><span class="ico-circ">' + ic('silla', 26) + '</span><div class="grow"><span class="t" id="wc-l" style="font-size:1.125rem">Silla de ruedas</span><small id="wc-s"' + (state.wc ? '' : ' hidden') + '>Evitamos desniveles, pozos y falta de acceso.</small></div>' +
+        '<button type="button" role="switch" class="switch" id="wc" aria-checked="' + state.wc + '" aria-labelledby="wc-l"><span id="wc-t">' + (state.wc ? 'Sí' : 'No') + '</span><span class="track"><span class="knob"></span></span></button></div>' +
+    '</form>' +
+    '<p class="foot">Por ahora funciona en el Centro de Montevideo.</p>' +
+    (state.demo ? '<details class="proto" open><summary>Demostración: ver otros estados</summary><div class="proto-btns" style="margin-top:.6rem">' +
+      '<button type="button" class="small-btn" data-demo="noloc">Sin ubicación</button>' +
+      '<button type="button" class="small-btn" data-demo="nodata">Zona sin información</button>' +
+      '<button type="button" class="small-btn" data-demo="error">Error al buscar</button></div></details>' : '') +
+    '<aside class="zone"><div class="mapbox">' + mapSvg(null) + LEGEND_ZONE + '</div><p class="foot" style="margin-top:.6rem">Centro de Montevideo</p></aside>',
+    dock:'<button type="submit" form="form-search" class="btn btn-primary">' + ic('navegar', 26) + '<span>Buscar recorrido</span></button>'};
+}
+
+function loadingScreen(){
+  return {tiles:'', bar:barHtml(pillBtn('btn-cancel', 'Cancelar', 'cerrar')), body:
+    '<div class="wait" role="status" aria-live="polite">' +
+      '<div class="halo">' + logo(104) + '</div>' +
+      '<h1 id="h1" tabindex="-1" style="text-align:center;font-size:2rem">Buscando tu recorrido</h1>' +
+      '<p class="lead muted">Con las mejores veredas</p>' +
+      '<span class="chip-dest">' + ic('pin', 24, TEAL) + '<span>' + esc(state.dest ? state.dest.label : '') + '</span></span>' +
+      '<div class="indet" aria-hidden="true"><div></div></div></div>'};
+}
+
+function recalcScreen(){
+  return {tiles:tiles(2, SKYL), bar:barHtml(pillBtn('btn-cancel-recalc', 'Salir', 'cerrar')), body:
+    '<div class="wait" role="status" aria-live="polite">' +
+      '<div class="halo alert">' + ic('izquierda', 84, ALERT, 2.2) + '</div>' +
+      '<h1 id="h1" tabindex="-1" style="text-align:center">Te desviaste</h1>' +
+      '<p class="lead muted">Buscando otro recorrido</p>' +
+      '<div class="indet" aria-hidden="true"><div></div></div></div>'};
+}
+
+function resultScreen(){
+  const r = state.result, S = r.sum, Sh = r.shortSum, mins = S.blocks * 2;
+  const chips = [];
+  if (S.bad === 0) chips.push('<span class="chip chip-ok">' + ic('check', 22) + '<span>Sin problemas registrados</span></span>');
+  else chips.push('<span class="chip chip-bad">' + ic('alert', 22) + '<span>' + pl(S.bad, 'cuadra', 'cuadras') + ' con problemas</span></span>');
+  if (S.unk) chips.push('<span class="chip chip-unk">' + ic('help', 22) + '<span>' + pl(S.unk, 'cuadra', 'cuadras') + ' sin información</span></span>');
+  const avoid = [];
+  if (Sh.bad > S.bad) avoid.push(pl(Sh.bad - S.bad, 'cuadra', 'cuadras') + ' con problemas');
+  if (Sh.unk > S.unk) avoid.push(pl(Sh.unk - S.unk, 'cuadra', 'cuadras') + ' sin información');
+  const notes = [];
+  if (S.bad > 0){
+    const types = [...new Set(r.path.filter(sg => sg.edge.status === 'bad').flatMap(sg => sg.edge.problems.map(p => p.t)))];
+    const barrier = r.wc && types.some(t => t !== 'baldosas');
+    notes.push('<p class="note note-bad">' + ic('alert', 22) + '<span>Pasa por ' + pl(S.bad, 'cuadra', 'cuadras') + ' con problemas registrados. Con la información disponible, no encontramos una alternativa sin ' + (S.bad === 1 ? 'ella' : 'ellas') + '.' + (barrier ? ' Con silla de ruedas, puede ser difícil o imposible pasar por ahí.' : '') + '</span></p>');
+  }
+  if (S.unk) notes.push('<p class="note note-unk">' + ic('help', 22) + '<span>Incluye ' + pl(S.unk, 'cuadra', 'cuadras') + ' sin información sobre el estado de la vereda.</span></p>');
+
+  const steps = r.steps.map(st => {
+    const icon = st.turn ? (st.turn === 'la derecha' ? 'derecha' : 'izquierda') : 'recto';
+    const allOk = st.segs.every(sg => sg.edge.status === 'ok');
+    return '<li class="stepcard"><span class="num">' + ic(icon, 30, '#fff', 2.6) + '</span><div class="grow" style="flex:1;min-width:0">' +
+      '<p class="l1">' + (st.turn ? 'Doblá a ' + st.turn : 'Seguí derecho') + '</p><p class="l2">' + esc(st.street) + ' · ' + pl(st.segs.length, 'cuadra', 'cuadras') + '</p>' +
+      (allOk ? '' : '<div class="chips">' + chipsHtml(st.segs) + '</div>') + '</div>' +
+      (allOk ? ic('check', 30, TEAL) + '<span class="sr">Sin problemas registrados</span>' : '') + '</li>';
+  }).join('') +
+  '<li class="stepcard end"><span class="num">' + ic('flag', 28, '#fff') + '</span><div><p class="l2">Llegada</p><p class="l1">' + esc(r.place.label) + '</p></div></li>';
+
+  const on = state.tab === 'mapa';
+  return {page:'p-result', wide:true, tiles:'', bar:barHtml(pillBtn('btn-back', 'Volver', 'back'), pillBtn('btn-report-route', 'Informar', 'alert')), body:
+    '<h1 id="h1" tabindex="-1" class="sr">Recorrido sugerido hasta ' + esc(r.place.label) + '</h1>' +
+    '<div class="tabs" role="tablist" aria-label="Vista del recorrido">' +
+      '<button type="button" role="tab" class="tab" id="tab-mapa" aria-selected="' + on + '" aria-controls="panel-mapa" tabindex="' + (on ? 0 : -1) + '">' + ic('mapa', 24) + '<span>Mapa</span></button>' +
+      '<button type="button" role="tab" class="tab" id="tab-pasos" aria-selected="' + !on + '" aria-controls="panel-pasos" tabindex="' + (on ? -1 : 0) + '">' + ic('lista', 24) + '<span>Pasos</span></button></div>' +
+    '<div class="panel" id="panel-mapa" role="tabpanel" aria-labelledby="tab-mapa"' + (on ? '' : ' hidden') + '>' +
+      '<p class="to">' + ic('pin', 24, TEAL) + '<span>Hacia ' + esc(r.place.label) + '</span></p>' +
+      (r.wc ? '<p class="wc-tag">' + ic('silla', 24) + 'Recorrido para silla de ruedas</p>' : '') +
+      '<p class="stats"><span><span class="n">' + mins + '</span><span class="u">min</span></span><span><span class="n">' + S.blocks + '</span><span class="u">' + (S.blocks === 1 ? 'cuadra' : 'cuadras') + '</span></span></p>' +
+      '<div class="mapbox">' + mapSvg(r) + LEGEND + '</div>' +
+      '<div class="chips r-chips">' + chips.join('') + '</div>' +
+      (avoid.length ? '<p class="note note-info r-avoid">' + ic('info', 22) + '<span>Elegimos este camino' + (S.blocks > Sh.blocks ? ', más largo,' : '') + ' para evitar ' + avoid.join(' y ') + '.' + (S.blocks > Sh.blocks ? ' El más directo tiene ' + pl(Sh.blocks, 'cuadra', 'cuadras') + '.' : '') + '</span></p>' : '') +
+      (notes.length ? '<div class="notes">' + notes.join('') + '</div>' : '') +
+    '</div>' +
+    '<div class="panel" id="panel-pasos" role="tabpanel" aria-labelledby="tab-pasos"' + (on ? ' hidden' : '') + '><ol class="steps">' + steps + '</ol></div>' +
+    '<p class="disclaimer">' + ic('info', 22) + '<span>El estado de las veredas lo informan personas que usan la app, así que puede estar desactualizado o incompleto.</span></p>',
+    dock:primary('btn-start', (state.nav.i > 0 || state.nav.frac > 0) ? 'Seguir recorrido' : 'Empezar recorrido', 'navegar')};
+}
+
+function navScreen(){
+  const r = state.result;
+  return {page:'p-nav', wide:true, tiles:'', bar:barHtml(pillBtn('btn-exit', 'Salir', 'cerrar'), pillBtn('btn-report-nav', 'Informar', 'alert')), body:
+    '<h1 id="h1" tabindex="-1" class="sr">Recorrido en curso hacia ' + esc(r.place.label) + '</h1>' +
+    '<div id="nav-banner"></div><div class="chips" id="nav-chips"></div><div id="nav-warn"></div>' +
+    '<div class="mapbox"><div id="nav-map"></div>' + LEGEND_NAV + '</div>' +
+    '<div id="nav-progress"></div>' +
+    (state.demo ? '<section class="proto" aria-label="Controles de demostración"><p><b>Demostración.</b> La posición avanza sola, como lo haría el GPS del teléfono.</p>' +
+      '<div class="proto-btns"><button type="button" class="small-btn" id="btn-sim" aria-pressed="' + state.paused + '">' + (state.paused ? 'Seguir' : 'Pausar') + '</button>' +
+      '<button type="button" class="small-btn" id="btn-off">Simular desvío</button>' +
+      '<button type="button" class="small-btn" id="btn-warn">Simular aviso</button></div></section>' : '')};
+}
+
+function stateScreen(o){
+  return {tiles:tiles(2, SKYL), bar:barHtml(brand()), body:
+    '<div class="state"><span class="state-ico ' + o.kind + '">' + ic(o.icon, 54, 'currentColor', 2.4) + '</span>' +
+    '<h1 id="h1" tabindex="-1">' + o.title + '</h1>' + (o.text ? '<p class="lead">' + o.text + '</p>' : '') + (o.extra || '') + '</div>',
+    dock:o.buttons};
+}
+const arrivedScreen = () => stateScreen({kind:'ok', icon:'flag', title:'Llegaste', extra:'<p class="here">' + ic('pin', 28, TEAL) + '<span>' + esc(state.result.place.label) + '</span></p>',
+  buttons:primary('btn-new', 'Nuevo recorrido', 'search') + secondary('btn-report-arrived', 'Informar un problema', 'alert') + secondary('btn-home', 'Volver al inicio')});
+const noDataScreen = () => stateScreen({kind:'unk', icon:'help', title:'Zona sin información', text:'Todavía no tenemos datos del estado de las veredas acá.',
+  extra:'<p class="muted">' + (state.lastKind === 'origin' ? 'Punto de partida: ' : 'Destino: ') + esc(state.lastQuery) + '</p>',
+  buttons:primary('btn-other', state.lastKind === 'origin' ? 'Probar otro punto de partida' : 'Probar otro destino', 'search')});
+const errorScreen = () => stateScreen({kind:'bad', icon:'alert', title:'No pudimos buscar tu recorrido', text:'Probá nuevamente.',
+  buttons:primary('btn-retry', 'Intentar nuevamente', 'navegar') + secondary('btn-home', 'Volver al inicio')});
+const noLocScreen = () => stateScreen({kind:'unk', icon:'pin', title:'No encontramos tu ubicación', text:'Activala en los ajustes del teléfono.',
+  buttons:primary('btn-retry-loc', 'Reintentar', 'pin') + secondary('btn-write-loc', 'Escribir dónde estoy', 'search')});
+
+/* Informar: paso 1, qué viste */
+function rep1Screen(){
+  const R = state.report;
+  const cats = Object.keys(PROBLEMS).map((k, n) =>
+    '<button type="button" role="radio" class="cat" data-type="' + k + '" aria-checked="' + (R.type === k) + '" tabindex="' + ((R.type === k || (!R.type && n === 0)) ? 0 : -1) + '">' +
+      '<span class="circ">' + ic(k, 44, TEAL, 2.2) + '</span><span>' + PROBLEMS[k].label + '</span><span class="tk">' + MARK_TICK + '</span></button>').join('');
+  return {tiles:'', bar:barHtml(pillBtn('btn-back-rep', 'Volver', 'back'), '<span class="step-count" aria-label="Paso 1 de 2">1 de 2</span>'), body:
+    '<h1 id="h1" tabindex="-1" style="margin-top:.4rem">¿Qué viste?</h1>' +
+    '<div class="tiles-cat" role="radiogroup" aria-label="Tipo de problema">' + cats + '</div>',
+    dock:'<p id="type-error" class="field-error" role="alert" hidden></p>' + primary('btn-next', 'Siguiente', 'next', R.type ? '' : ' aria-disabled="true"')};
+}
+
+/* Informar: paso 2, dónde está */
+function repOptions(){
+  const R = state.report, r = state.result, groups = [];
+  const here = state.locOn ? ((R.from === 'nav' && r) ? r.path[state.nav.i].edge : homeEdge) : null;
+  const used = new Set();
+  const mk = (edge, hereRow) => { used.add(edge.id); const bl = edgeBlock(edge), p = labelParts(edge.label); return {bl, main:hereRow ? 'Acá donde estoy' : p[0], sub:hereRow ? edge.label : p[1]}; };
+  if (here) groups.push({title:'Dónde estás ahora', rows:[mk(here, true)]});
+  if (r && R.from !== 'home'){
+    const start = R.from === 'nav' ? state.nav.i : 0;
+    const order = [...r.path.slice(start), ...r.path.slice(0, start)].map(sg => sg.edge).filter(e => !used.has(e.id)).slice(0, 4);
+    if (order.length) groups.push({title:'Otras cuadras de tu recorrido', rows:order.map(e => mk(e, false))});
+  }
+  if (R.block && !used.has(R.block.edge.id)) groups.unshift({title:'Cuadra elegida', rows:[mk(R.block.edge, false)]});
+  return groups;
+}
+function rep2Screen(){
+  const R = state.report, groups = repOptions();
+  const html = groups.map((g, gi) =>
+    '<div class="group" role="radiogroup" aria-label="' + g.title + '"><p class="kicker">' + g.title + '</p>' +
+    g.rows.map(row => '<button type="button" role="radio" class="optrow" data-bid="' + row.bl.id + '" aria-checked="' + (R.block === row.bl) + '">' +
+      '<span class="rd">' + MARK_TICK + '</span><span class="grow" style="flex:1;min-width:0"><span class="t">' + esc(row.main) + '</span><span class="s">' + esc(row.sub) + '</span></span></button>').join('') + '</div>').join('');
+  return {tiles:'', bar:barHtml(pillBtn('btn-back-rep2', 'Volver', 'back'), '<span class="step-count" aria-label="Paso 2 de 2">2 de 2</span>'), body:
+    '<div class="head-row" style="margin-top:.4rem"><h1 id="h1" tabindex="-1" style="font-size:clamp(1.7rem,8vw,2.125rem)">¿Dónde está?</h1><span class="type-pill">' + ic(R.type, 24, TEAL) + '<span>' + PROBLEMS[R.type].label + '</span></span></div>' +
+    html +
+    '<div class="group"><label class="kicker" for="loc">' + (groups.length ? '¿Es otra calle? Buscala acá' : 'Buscá la calle') + '</label>' +
+      '<p id="loc-error" class="field-error" role="alert" hidden></p>' +
+      searchField({id:'loc', sm:true, label:'Buscar otra calle', ph:'Ej.: 18 de Julio', value:'', listLabel:'Cuadras sugeridas', enter:'done'}) + '</div>',
+    dock:'<p id="send-error" class="field-error" role="alert" hidden></p>' + primary('btn-send', 'Informar problema', 'check', R.block ? '' : ' aria-disabled="true"')};
+}
+
+function doneScreen(){
+  const from = state.report.from, d = state.done;
+  const buttons =
+    from === 'nav' ? primary('btn-update-nav', 'Ver recorrido actualizado', 'navegar') + secondary('btn-resume', 'Seguir con el recorrido actual') :
+    from === 'result' ? primary('btn-update', 'Ver recorrido actualizado', 'navegar') + secondary('btn-home', 'Volver al inicio') :
+    primary('btn-home', 'Volver al inicio');
+  return stateScreen({kind:'ok', icon:'check', title:'Problema informado', text:'Tu reporte fue registrado.',
+    extra:'<div class="summary"><span class="ico-circ">' + ic(d.type, 26) + '</span><div><b>' + PROBLEMS[d.type].label + '</b><span class="muted">' + esc(d.block.label) + '</span></div></div><p class="disclaimer">' + ic('info', 22) + '<span>Lo tenemos en cuenta en los próximos recorridos.</span></p>',
+    buttons:buttons}) ;
+}
+
+/* ───────────── Guía: la app detecta sola cada esquina ───────────── */
+function navModel(r, i, frac){
+  const seg = r.path[i], e = seg.edge, n = r.path.length;
+  let run = null, pos = 0, acc = 0;
+  for (const st of r.steps){ if (i < acc + st.segs.length){ run = st; pos = i - acc; break; } acc += st.segs.length; }
+  const lastInRun = pos === run.segs.length - 1, isLast = i === n - 1;
+  const next = r.steps[run.i + 1];
+  const dist = Math.max(0, Math.round((1 - frac) * BLOCK_M / 5) * 5);
+  const cross = crossName(r, i);
+  let icon = 'recto', main = run.street, sub = 'En ' + dist + ' m · ' + cross;
+  if (isLast && dist <= 30){ icon = 'flag'; main = 'Ya llegás'; sub = 'En ' + dist + ' m · ' + r.place.label; }
+  else if (lastInRun && next && dist <= 30){ icon = next.turn === 'la derecha' ? 'derecha' : 'izquierda'; main = 'Doblá a ' + next.turn; sub = 'En ' + dist + ' m · ' + next.street; }
+  // aviso: problema en esta cuadra o en la próxima
+  let warn = null;
+  const nextSeg = r.path[i + 1];
+  const src = e.status === 'bad' ? {edge:e, where:'En esta cuadra'} : (nextSeg && nextSeg.edge.status === 'bad' ? {edge:nextSeg.edge, where:'En la próxima cuadra'} : null);
+  if (src){
+    const types = [...new Set(src.edge.problems.map(p => PROBLEMS[p.t].label))];
+    const barrier = r.wc && src.edge.problems.some(p => p.t !== 'baldosas');
+    warn = {title:types.join(' y '), where:src.where, extra:barrier ? 'Con silla de ruedas, puede ser difícil pasar.' : ''};
+  }
+  const mins = Math.max(1, Math.ceil(((n - i) - frac) * 2));
+  return {icon, main, sub, warn, status:e.status, n:i + 1, total:n, mins, pct:Math.min(100, ((i + frac) / n) * 100), seg};
+}
+
+function paintNav(){
+  const r = state.result, m = navModel(r, state.nav.i, state.nav.frac);
+  setHtml(document.getElementById('nav-banner'),
+    '<div class="banner"><span class="banner-ico">' + ic(m.icon, 52, TEAL, 2.8) + '</span><div><p class="banner-main">' + esc(m.main) + '</p><p class="banner-sub">' + esc(m.sub) + '</p></div></div>');
+  const arr = state.arrival && Date.now() < state.arrival.until ? state.arrival.name : null;
+  let chips = '<span class="chip chip-live' + (state.paused ? ' paused' : '') + '"><span class="dot"></span><span>' + (state.paused ? 'En pausa' : 'En vivo') + '</span></span>';
+  if (!m.warn && m.status !== 'bad') chips += chipsHtml([m.seg]);
+  if (arr) chips += '<span class="chip chip-arrive">' + ic('tick', 22, '#fff', 3) + '<span>Llegaste a ' + esc(arr) + '</span></span>';
+  setHtml(document.getElementById('nav-chips'), chips);
+  setHtml(document.getElementById('nav-warn'), m.warn
+    ? '<div class="warn" role="note">' + ic('alert', 30, ALERT) + '<div><b>' + esc(m.warn.title) + '</b><span>' + esc(m.warn.where) + '</span>' + (m.warn.extra ? '<span>' + esc(m.warn.extra) + '</span>' : '') + '</div></div>' : '');
+  setHtml(document.getElementById('nav-map'), mapSvg(r, {cur:state.nav.i, frac:state.nav.frac}));
+  setHtml(document.getElementById('nav-progress'),
+    '<div class="progress-row"><span>Cuadra ' + m.n + ' de ' + m.total + '</span><span>' + m.mins + ' min</span></div>' +
+    '<div class="progress-bar" role="progressbar" aria-label="Avance del recorrido" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(m.pct) + '"><div style="width:' + m.pct.toFixed(1) + '%"></div></div>');
+  const wkey = m.warn ? m.warn.title + m.warn.where : '';
+  if (wkey !== state.lastWarn){ state.lastWarn = wkey; if (m.warn) announce('Atención: ' + m.warn.title + ' ' + m.warn.where.toLowerCase() + '.'); }
+  return m;
+}
+
+function stopNav(){ clearInterval(state.timer); state.timer = null; }
+function startNav(){
+  stopNav();
+  const r = state.result;
+  state.lastWarn = '';
+  paintNav();
+  state.timer = setInterval(() => {
+    if (state.paused || state.screen !== 'nav') return;
+    const n = state.nav;
+    n.frac += TICK / STEP_MS;
+    if (n.frac >= 1){
+      const reached = crossName(r, n.i);
+      n.i++; n.frac = 0;
+      if (n.i >= r.path.length){ n.i = 0; stopNav(); go('arrived'); return; }
+      state.arrival = {name:reached, until:Date.now() + 2800};
+      const m = paintNav();
+      announce('Llegaste a ' + reached + '. ' + m.main + '. ' + m.sub + '.');
+    } else paintNav();
+  }, TICK);
+}
+
+function simulateOffRoute(){
+  const r = state.result, n = state.nav, seg = r.path[n.i];
+  const destK = key(r.place.x, r.place.y);
+  const from = (n.frac > 0.5 && key(...seg.to) !== destK) ? seg.to : seg.from;
+  const token = ++state.token;
+  go('recalc');
+  setTimeout(() => {
+    if (token !== state.token) return;
+    const nr = computeRoute(r.place, {x:from[0], y:from[1], from:'nav'}, state.wc);
+    if (!nr){ state.screen = 'error'; render(); return; }
+    state.result = nr; state.nav = {i:0, frac:0}; state.arrival = null;
+    state.screen = 'nav'; render();
+  }, 2400);
+}
+
+/* ───────────── Render y navegación ───────────── */
+const SCREENS = {splash:splashScreen, perm:permScreen, home:homeScreen, loading:loadingScreen, recalc:recalcScreen, result:resultScreen, nav:navScreen,
+  arrived:arrivedScreen, nodata:noDataScreen, error:errorScreen, noloc:noLocScreen, rep1:rep1Screen, rep2:rep2Screen, done:doneScreen};
+
+function render(opts){
+  stopNav();
+  const s = state.screen, v = SCREENS[s]();
+  app.className = 'app' + (v.teal ? ' on-teal' : '');
+  app.dataset.layout = v.wide ? 'wide' : 'narrow';
+  document.body.classList.toggle('on-teal', !!v.teal);
+  app.innerHTML = (v.tiles || '') + (v.raw ? v.body : (v.bar || '') + '<main class="page ' + (v.page || '') + '" id="main">' + v.body + '</main>' + (v.dock ? '<div class="dock" id="dock">' + v.dock + '</div>' : ''));
+  const dk = document.getElementById('dock');
+  app.style.setProperty('--dock-h', (dk ? dk.offsetHeight : 0) + 'px');
+  bind(s);
+  if (!(opts && opts.quiet)){
+    window.scrollTo(0, 0);
+    const h = document.getElementById('h1'); if (h && s !== 'splash') h.focus({preventScroll:true});
+  }
+}
+function go(screen, opts){ state.screen = screen; render(opts); }
+function goHome(clear){
+  state.token++;
+  if (clear){ state.destQuery = ''; state.dest = null; }
+  go('home');
+}
+function currentOrigin(){
+  if (state.origMode === 'gps') return {x:ORIGIN.x, y:ORIGIN.y, from:'gps'};
+  return state.orig ? {x:state.orig.x, y:state.orig.y, from:'chosen'} : null;
+}
+function startSearch(place, origin){
+  state.dest = place; state.destQuery = place.label; state.origin = origin;
+  const token = ++state.token;
+  go('loading');
+  setTimeout(() => {
+    if (token !== state.token) return;
+    try {
+      if (navigator.onLine === false) throw new Error('sin conexión');
+      const r = computeRoute(place, origin, state.wc);
+      if (!r) throw new Error('sin recorrido');
+      state.result = r; state.nav = {i:0, frac:0}; state.arrival = null; state.tab = 'mapa'; state.screen = 'result';
+    } catch (e) { state.screen = 'error'; }
+    render();
+  }, 1700);
+}
+// Vuelve a calcular con los reportes nuevos, desde el mismo punto o desde donde está la persona.
+function updateRoute(fromNav){
+  const r = state.result;
+  let origin = r.origin;
+  if (fromNav){
+    const seg = r.path[state.nav.i], destK = key(r.place.x, r.place.y);
+    const p = (state.nav.frac > 0.5 && key(...seg.to) !== destK) ? seg.to : seg.from;
+    origin = {x:p[0], y:p[1], from:'nav'};
+  }
+  startSearch(state.dest || r.place, origin);
+}
+// Un reporte nuevo suma un problema a esa cuadra y se tiene en cuenta en las próximas búsquedas.
+function applyReport(block, type){
+  const e = block.edge, p = e.problems.find(x => x.t === type);
+  if (p) p.n++; else e.problems.push({t:type, r:0, n:1});
+  e.status = 'bad';
+}
+function openReport(from){ state.report = {type:null, block:null, q:'', from:from}; go('rep1'); }
+
+function bind(s){
+  const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+  on('btn-home', () => { state.nav = {i:0, frac:0}; goHome(true); });
+  on('btn-new', () => { state.nav = {i:0, frac:0}; goHome(true); setTimeout(() => { const d = document.getElementById('dest'); if (d) d.focus(); }, 0); });
+  on('btn-retry', () => { if (state.dest) startSearch(state.dest, currentOrigin() || state.origin); else goHome(false); });
+  on('btn-other', () => { const id = state.lastKind === 'origin' ? 'orig' : 'dest'; goHome(false); setTimeout(() => { const d = document.getElementById(id); if (d){ d.focus(); d.select(); } }, 0); });
+  on('btn-cancel', () => { state.token++; goHome(false); });
+  on('btn-cancel-recalc', () => { state.token++; go('result'); });
+  on('btn-back', () => goHome(false));
+  on('btn-exit', () => go('result'));
+  on('btn-start', () => go('nav'));
+  on('btn-report', () => openReport('home'));
+  on('btn-report-route', () => openReport('result'));
+  on('btn-report-nav', () => openReport('nav'));
+  on('btn-report-arrived', () => openReport('home'));
+  on('btn-update', () => updateRoute(false));
+  on('btn-update-nav', () => updateRoute(true));
+  on('btn-resume', () => go('nav'));
+  on('btn-retry-loc', () => { state.locOn = true; state.origMode = 'gps'; goHome(false); });
+  on('btn-write-loc', () => { state.origMode = 'manual'; goHome(false); setTimeout(() => { const d = document.getElementById('orig'); if (d) d.focus(); }, 0); });
+
+  if (s === 'splash'){
+    const sp = document.getElementById('splash'), token = ++state.token;
+    const next = () => { if (state.screen === 'splash' && token === state.token) go('perm'); };
+    sp.addEventListener('click', next);
+    sp.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); next(); } });
+    setTimeout(next, 2600);
+  }
+
+  if (s === 'perm'){
+    on('btn-allow', () => { state.locOn = true; state.origMode = 'gps'; goHome(false); });
+    on('btn-deny', () => { state.locOn = false; state.origMode = 'manual'; state.orig = null; state.origQuery = ''; goHome(false); });
+  }
+
+  if (s === 'home'){
+    const input = document.getElementById('dest');
+    const c = combo({
+      input, list:document.getElementById('dest-list'),
+      items:q => (q.trim() ? search(places, q) : FEATURED.map(l => places.find(p => p.label === l))).slice(0, 6),
+      onChoose:p => { state.dest = p; state.destQuery = p.label; fieldError('dest-box', 'dest', 'dest-error', ''); },
+      onInput:() => { state.dest = null; state.destQuery = input.value; fieldError('dest-box', 'dest', 'dest-error', ''); }
+    });
+    let co = null, oin = document.getElementById('orig');
+    if (oin){
+      co = combo({
+        input:oin, list:document.getElementById('orig-list'),
+        items:q => (q.trim() ? search(places, q) : FEATURED_O.map(l => places.find(p => p.label === l))).slice(0, 6),
+        onChoose:p => { state.orig = p; state.origQuery = p.label; fieldError('orig-box', 'orig', 'orig-error', ''); },
+        onInput:() => { state.orig = null; state.origQuery = oin.value; fieldError('orig-box', 'orig', 'orig-error', ''); }
+      });
+    }
+    on('btn-orig-change', () => { state.origMode = 'manual'; state.orig = null; state.origQuery = ''; state.destQuery = input.value; render({quiet:true}); setTimeout(() => { const d = document.getElementById('orig'); if (d) d.focus(); }, 0); });
+    on('btn-orig-gps', () => {
+      state.destQuery = input.value;
+      if (state.locOn){ state.origMode = 'gps'; render({quiet:true}); } else go('noloc');
+    });
+    const wc = document.getElementById('wc');
+    wc.addEventListener('click', () => {
+      state.wc = !state.wc;
+      wc.setAttribute('aria-checked', String(state.wc));
+      document.getElementById('wc-t').textContent = state.wc ? 'Sí' : 'No';
+      document.getElementById('wc-s').hidden = !state.wc;
+    });
+    document.querySelectorAll('[data-demo]').forEach(btn => btn.addEventListener('click', () => {
+      const d = btn.dataset.demo;
+      if (d === 'noloc') go('noloc');
+      else if (d === 'error') go('error');
+      else { state.lastQuery = 'Av. Italia 1234'; state.lastKind = 'dest'; go('nodata'); }
+    }));
+    document.getElementById('form-search').addEventListener('submit', ev => {
+      ev.preventDefault();
+      const qd = input.value.trim();
+      state.destQuery = input.value;
+      if (!qd){ fieldError('dest-box', 'dest', 'dest-error', 'Indicá a dónde vas para buscar un recorrido.'); input.focus(); c.hide(); return; }
+      const d = resolvePlace(qd, state.dest);
+      if (!d.place){
+        if (d.none){ state.lastQuery = qd; state.lastKind = 'dest'; go('nodata'); return; }
+        fieldError('dest-box', 'dest', 'dest-error', 'Elegí un destino de la lista.'); input.focus(); c.show(); return;
+      }
+      let origin;
+      if (state.origMode === 'gps') origin = {x:ORIGIN.x, y:ORIGIN.y, from:'gps'};
+      else {
+        const qo = oin.value.trim(); state.origQuery = oin.value;
+        if (!qo){ fieldError('orig-box', 'orig', 'orig-error', 'Indicá desde dónde salís.'); oin.focus(); co.hide(); return; }
+        const o = resolvePlace(qo, state.orig);
+        if (!o.place){
+          if (o.none){ state.lastQuery = qo; state.lastKind = 'origin'; go('nodata'); return; }
+          fieldError('orig-box', 'orig', 'orig-error', 'Elegí un punto de partida de la lista.'); oin.focus(); co.show(); return;
+        }
+        state.orig = o.place; origin = {x:o.place.x, y:o.place.y, from:'chosen'};
+      }
+      if (d.place.k === key(origin.x, origin.y)){ fieldError('dest-box', 'dest', 'dest-error', 'Ese lugar es tu punto de partida. Probá con otro destino.'); input.focus(); c.hide(); return; }
+      state.dest = d.place;
+      startSearch(d.place, origin);
+    });
+  }
+
+  if (s === 'result'){
+    const tabs = ['mapa', 'pasos'];
+    const show = t => {
+      state.tab = t;
+      tabs.forEach(k => {
+        const tb = document.getElementById('tab-' + k), on_ = k === t;
+        tb.setAttribute('aria-selected', String(on_)); tb.tabIndex = on_ ? 0 : -1;
+        document.getElementById('panel-' + k).hidden = !on_;
+      });
+    };
+    tabs.forEach(k => {
+      const tb = document.getElementById('tab-' + k);
+      tb.addEventListener('click', () => show(k));
+      tb.addEventListener('keydown', ev => {
+        if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft' || ev.key === 'Home' || ev.key === 'End'){
+          ev.preventDefault();
+          const t = ev.key === 'Home' ? 'mapa' : ev.key === 'End' ? 'pasos' : (k === 'mapa' ? 'pasos' : 'mapa');
+          show(t); document.getElementById('tab-' + t).focus();
+        }
+      });
+    });
+  }
+
+  if (s === 'nav'){
+    startNav();
+    const bSim = document.getElementById('btn-sim');
+    if (bSim) bSim.addEventListener('click', ev => {
+      state.paused = !state.paused;
+      ev.currentTarget.textContent = state.paused ? 'Seguir' : 'Pausar';
+      ev.currentTarget.setAttribute('aria-pressed', String(state.paused));
+      paintNav();
+    });
+    const bOff = document.getElementById('btn-off');
+    if (bOff) bOff.addEventListener('click', simulateOffRoute);
+    // Simula que alguien acaba de informar baldosas en mal estado en la próxima cuadra del recorrido.
+    const bWarn = document.getElementById('btn-warn');
+    if (bWarn) bWarn.addEventListener('click', () => {
+      const r = state.result, j = Math.min(state.nav.i + 1, r.path.length - 1);
+      applyReport(edgeBlock(r.path[j].edge), 'baldosas');
+      paintNav();
+    });
+  }
+
+  if (s === 'rep1'){
+    const R = state.report, radios = [...document.querySelectorAll('.cat')];
+    const pick = btn => {
+      R.type = btn.dataset.type;
+      radios.forEach(b => { const on_ = b === btn; b.setAttribute('aria-checked', String(on_)); b.tabIndex = on_ ? 0 : -1; });
+      const nx = document.getElementById('btn-next'); nx.removeAttribute('aria-disabled');
+      fieldError(null, null, 'type-error', '');
+    };
+    radios.forEach((b, i) => {
+      b.addEventListener('click', () => pick(b));
+      b.addEventListener('keydown', ev => {
+        const k = ev.key, d = (k === 'ArrowRight' || k === 'ArrowDown') ? 1 : (k === 'ArrowLeft' || k === 'ArrowUp') ? -1 : 0;
+        if (d){ ev.preventDefault(); const t = radios[(i + d + radios.length) % radios.length]; t.focus(); pick(t); }
+      });
+    });
+    on('btn-back-rep', () => { const f = R.from; if (f === 'result' && state.result) go('result'); else if (f === 'nav' && state.result) go('nav'); else goHome(false); });
+    on('btn-next', () => {
+      if (!R.type){ fieldError(null, null, 'type-error', 'Elegí qué viste para seguir.'); radios[0].focus(); return; }
+      if (!R.block && state.locOn) R.block = edgeBlock((R.from === 'nav' && state.result) ? state.result.path[state.nav.i].edge : homeEdge);
+      go('rep2');
+    });
+  }
+
+  if (s === 'rep2'){
+    const R = state.report;
+    on('btn-back-rep2', () => go('rep1'));
+    document.querySelectorAll('.optrow').forEach(b => b.addEventListener('click', () => {
+      R.block = blocks.find(bl => bl.id === b.dataset.bid);
+      render({quiet:true});
+      const t = document.querySelector('.optrow[data-bid="' + b.dataset.bid + '"]'); if (t) t.focus();
+    }));
+    const input = document.getElementById('loc');
+    combo({
+      input, list:document.getElementById('loc-list'),
+      items:q => (q.trim() ? search(blocks, q) : blocks.filter(bl => bl.edge.street === '18 de Julio')).slice(0, 8),
+      onChoose:bl => { R.block = bl; render({quiet:true}); const t = document.querySelector('.optrow[data-bid="' + bl.id + '"]'); if (t){ t.focus(); t.scrollIntoView({block:'center'}); } },
+      onInput:() => { fieldError('loc-box', 'loc', 'loc-error', ''); fieldError(null, null, 'send-error', ''); }
+    });
+    on('btn-send', () => {
+      if (!R.block){
+        const q = input.value.trim();
+        if (q){ fieldError('loc-box', 'loc', 'loc-error', 'Elegí una cuadra de la lista.'); input.focus(); }
+        else { fieldError(null, null, 'send-error', 'Elegí dónde está el problema.'); const f = document.querySelector('.optrow'); (f || input).focus(); }
+        return;
+      }
+      applyReport(R.block, R.type);
+      state.done = {block:R.block, type:R.type};
+      go('done');
+    });
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  const d = /^#demo$/.test(location.hash);
+  if (d === state.demo) return;
+  state.demo = d;
+  if (state.screen === 'home' || state.screen === 'nav') render({quiet:true});
+});
+render({quiet:true});
+})();
+</script>
+</body>
+</html>
